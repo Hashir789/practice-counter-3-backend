@@ -15,7 +15,7 @@ describe('API Endpoints', () => {
     it('should return welcome message', async () => {
       const response = await request(app).get('/');
       expect(response.status).toBe(200);
-      expect(response.body.message).toContain('Kitaab Backend API');
+      expect(response.body.message).toContain('Practice API');
     });
   });
 

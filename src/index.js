@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 // Simple math endpoint for testing
-app.get('/api/add', (req, res) => {
+app.get('/api/add-numbers', (req, res) => {
   const { a, b } = req.query;
   const numA = parseFloat(a);
   const numB = parseFloat(b);

@@ -4,7 +4,8 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const BACKEND_URL = process.env.BACKEND_URL || 'http://d1tdizimiz2qsf.cloudfront.net';
+const BACKEND_URL =
+  process.env.BACKEND_URL || 'http://d1tdizimiz2qsf.cloudfront.net';
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -21,7 +22,11 @@ const apiRouter = express.Router();
 
 // Health check endpoint
 apiRouter.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running', backendUrl: BACKEND_URL });
+  res.json({
+    status: 'ok',
+    message: 'Server is running',
+    backendUrl: BACKEND_URL,
+  });
 });
 
 // Simple greeting endpoint
@@ -48,7 +53,11 @@ app.use('/api', apiRouter);
 
 // Root endpoint (for backward compatibility)
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Practice API', backendUrl: BACKEND_URL, apiBase: `${BACKEND_URL}/api` });
+  res.json({
+    message: 'Welcome to Practice API',
+    backendUrl: BACKEND_URL,
+    apiBase: `${BACKEND_URL}/api`,
+  });
 });
 
 // Socket.io connection handling

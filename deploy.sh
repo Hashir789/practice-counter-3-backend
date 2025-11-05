@@ -13,17 +13,54 @@ APP_DIR="/home/ubuntu/kitaab-backend"
 echo "Current directory before change: $(pwd)"
 echo "Target directory: $APP_DIR"
 
-# Create directory if it doesn't exist
-mkdir -p $APP_DIR
-cd $APP_DIR
-
-echo "Current directory after change: $(pwd)"
-echo "Directory contents:"
-ls -la
-
-# Pull latest code
-echo "Pulling latest code from git..."
-git pull origin main || git pull origin master || git pull
+# Check if git repository exists in the target directory
+if [ -d "$APP_DIR/.git" ]; then
+  echo "Git repository found in $APP_DIR"
+  cd $APP_DIR
+  echo "Current directory: $(pwd)"
+  echo "Pulling latest code from git..."
+  git pull origin main || git pull origin master || git pull
+else
+  echo "Git repository not found in $APP_DIR"
+  echo "Searching for git repository in common locations..."
+  
+  # Search for git repository in common locations
+  POSSIBLE_LOCATIONS=(
+    "/home/ubuntu"
+    "/home/$USER"
+    "/var/www"
+    "/opt"
+  )
+  
+  FOUND_REPO=""
+  for location in "${POSSIBLE_LOCATIONS[@]}"; do
+    if [ -d "$location/kitaab-backend/.git" ]; then
+      FOUND_REPO="$location/kitaab-backend"
+      echo "Found git repository at: $FOUND_REPO"
+      break
+    fi
+  done
+  
+  if [ -n "$FOUND_REPO" ]; then
+    echo "Using found repository at $FOUND_REPO"
+    cd "$FOUND_REPO"
+    echo "Current directory: $(pwd)"
+    echo "Pulling latest code from git..."
+    git pull origin main || git pull origin master || git pull
+    APP_DIR="$FOUND_REPO"
+  else
+    echo "Directory contents of $APP_DIR:"
+    ls -la $APP_DIR 2>/dev/null || echo "Directory does not exist"
+    echo ""
+    echo "ERROR: Git repository not found."
+    echo "Please ensure the repository is cloned in $APP_DIR or update APP_DIR in deploy.sh"
+    echo ""
+    echo "To clone the repository, run on EC2:"
+    echo "  cd /home/ubuntu"
+    echo "  git clone <your-repo-url> kitaab-backend"
+    exit 1
+  fi
+fi
 
 # Install/update dependencies
 echo "Installing dependencies..."

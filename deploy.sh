@@ -18,8 +18,24 @@ if [ -d "$APP_DIR/.git" ]; then
   echo "Git repository found in $APP_DIR"
   cd $APP_DIR
   echo "Current directory: $(pwd)"
-  echo "Pulling latest code from git..."
-  git pull origin main || git pull origin master || git pull
+  echo "Fetching latest code from git..."
+  git fetch origin
+  
+  # Discard local changes and reset to remote branch
+  echo "Discarding local changes and updating to latest remote code..."
+  if git rev-parse --verify origin/main >/dev/null 2>&1; then
+    git reset --hard origin/main
+  elif git rev-parse --verify origin/master >/dev/null 2>&1; then
+    git reset --hard origin/master
+  else
+    # Fallback: try to pull with rebase to handle conflicts
+    git reset --hard HEAD
+    git pull --rebase origin main || git pull --rebase origin master || git pull
+  fi
+  
+  # Clean any untracked files (optional, but keeps deployment clean)
+  echo "Cleaning untracked files..."
+  git clean -fd || true
 else
   echo "Git repository not found in $APP_DIR"
   echo "Searching for git repository in common locations..."
@@ -45,8 +61,24 @@ else
     echo "Using found repository at $FOUND_REPO"
     cd "$FOUND_REPO"
     echo "Current directory: $(pwd)"
-    echo "Pulling latest code from git..."
-    git pull origin main || git pull origin master || git pull
+    echo "Fetching latest code from git..."
+    git fetch origin
+    
+    # Discard local changes and reset to remote branch
+    echo "Discarding local changes and updating to latest remote code..."
+    if git rev-parse --verify origin/main >/dev/null 2>&1; then
+      git reset --hard origin/main
+    elif git rev-parse --verify origin/master >/dev/null 2>&1; then
+      git reset --hard origin/master
+    else
+      # Fallback: try to pull with rebase to handle conflicts
+      git reset --hard HEAD
+      git pull --rebase origin main || git pull --rebase origin master || git pull
+    fi
+    
+    # Clean any untracked files (optional, but keeps deployment clean)
+    echo "Cleaning untracked files..."
+    git clean -fd || true
     APP_DIR="$FOUND_REPO"
   else
     echo "Directory contents of $APP_DIR:"

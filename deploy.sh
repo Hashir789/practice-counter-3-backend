@@ -62,6 +62,56 @@ else
   fi
 fi
 
+# Source profile to ensure PATH is set correctly (for non-interactive shells)
+# Use -f flag to force sourcing even in non-interactive shells
+if [ -f ~/.bashrc ]; then
+  source ~/.bashrc 2>/dev/null || true
+fi
+if [ -f ~/.profile ]; then
+  source ~/.profile 2>/dev/null || true
+fi
+if [ -f ~/.bash_profile ]; then
+  source ~/.bash_profile 2>/dev/null || true
+fi
+
+# Find npm in common locations and add to PATH
+NPM_PATH=""
+if command -v npm &> /dev/null; then
+  NPM_PATH=$(command -v npm)
+  echo "Found npm at: $NPM_PATH"
+else
+  # Try to find npm in common installation paths
+  for path in /usr/bin/npm /usr/local/bin/npm ~/.nvm/current/bin/npm /home/ubuntu/.nvm/current/bin/npm; do
+    if [ -f "$path" ]; then
+      NPM_PATH="$path"
+      export PATH="$(dirname $path):$PATH"
+      echo "Found npm at: $NPM_PATH"
+      break
+    fi
+  done
+  
+  # Try nvm if available
+  if [ -z "$NPM_PATH" ] && [ -f ~/.nvm/nvm.sh ]; then
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+    NPM_PATH=$(command -v npm 2>/dev/null || echo "")
+  fi
+fi
+
+# Final check
+if [ -z "$NPM_PATH" ] && ! command -v npm &> /dev/null; then
+  echo "ERROR: npm is not found in PATH"
+  echo "Current PATH: $PATH"
+  echo ""
+  echo "Please ensure npm is installed and accessible."
+  echo "You can check with: which npm"
+  exit 1
+fi
+
+# Verify Node.js and npm versions
+echo "Node.js version: $(node --version 2>/dev/null || echo 'not found')"
+echo "npm version: $(npm --version 2>/dev/null || echo 'not found')"
+
 # Install/update dependencies
 echo "Installing dependencies..."
 npm ci --production

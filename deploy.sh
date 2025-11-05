@@ -8,7 +8,7 @@ set -e
 echo "Starting deployment..."
 
 # Navigate to application directory
-APP_DIR="/home/ubuntu/kitaab-backend"
+APP_DIR="/home/ubuntu/practice-counter-3-backend"
 
 echo "Current directory before change: $(pwd)"
 echo "Target directory: $APP_DIR"
@@ -34,8 +34,8 @@ else
   
   FOUND_REPO=""
   for location in "${POSSIBLE_LOCATIONS[@]}"; do
-    if [ -d "$location/kitaab-backend/.git" ]; then
-      FOUND_REPO="$location/kitaab-backend"
+    if [ -d "$location/practice-counter-3-backend/.git" ]; then
+      FOUND_REPO="$location/practice-counter-3-backend"
       echo "Found git repository at: $FOUND_REPO"
       break
     fi
@@ -57,7 +57,7 @@ else
     echo ""
     echo "To clone the repository, run on EC2:"
     echo "  cd /home/ubuntu"
-    echo "  git clone <your-repo-url> kitaab-backend"
+    echo "  git clone <your-repo-url> practice-counter-3-backend"
     exit 1
   fi
 fi

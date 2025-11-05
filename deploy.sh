@@ -120,24 +120,24 @@ npm ci --production
 if command -v pm2 &> /dev/null; then
   echo "Restarting application with PM2..."
   
-  # Try to find PM2 process running from this directory
+  # Find PM2 process that's running from this directory
   PM2_APP_NAME=""
-  if [ -f ecosystem.config.js ]; then
-    # Extract app name from ecosystem.config.js
-    PM2_APP_NAME=$(grep -oP "name:\s*['\"]([^'\"]+)['\"]" ecosystem.config.js | head -1 | grep -oP "['\"]([^'\"]+)['\"]" | tr -d "'\"")
-    echo "Found PM2 app name in ecosystem.config.js: $PM2_APP_NAME"
-  fi
   
-  # If no name from config, try to find PM2 process by working directory
-  if [ -z "$PM2_APP_NAME" ]; then
-    PM2_APP_NAME=$(pm2 list | grep -i "$(basename $APP_DIR)" | awk '{print $2}' | head -1)
-    if [ -n "$PM2_APP_NAME" ]; then
-      echo "Found PM2 app by directory name: $PM2_APP_NAME"
+  # First, check which PM2 processes are running from this directory
+  echo "Checking for PM2 processes running from $APP_DIR..."
+  for app_name in $(pm2 jlist | jq -r '.[].name' 2>/dev/null || pm2 list | tail -n +4 | head -n -1 | awk '{print $2}'); do
+    # Get the process info to check if it's running from this directory
+    APP_CWD=$(pm2 describe "$app_name" 2>/dev/null | grep "cwd" | awk '{print $4}' || echo "")
+    if [ "$APP_CWD" = "$APP_DIR" ]; then
+      PM2_APP_NAME="$app_name"
+      echo "Found PM2 app running from this directory: $PM2_APP_NAME"
+      break
     fi
-  fi
+  done
   
-  # If still no name, try common names (check my-node-app first since it's likely the running one)
+  # If not found by directory, check common names (my-node-app first since it's likely the running one)
   if [ -z "$PM2_APP_NAME" ]; then
+    echo "No PM2 process found running from this directory, checking common names..."
     for name in "my-node-app" "practice-counter-3-backend" "kitaab-backend"; do
       if pm2 describe "$name" &>/dev/null; then
         PM2_APP_NAME="$name"
@@ -145,6 +145,12 @@ if command -v pm2 &> /dev/null; then
         break
       fi
     done
+  fi
+  
+  # If still not found and ecosystem.config.js exists, use name from config
+  if [ -z "$PM2_APP_NAME" ] && [ -f ecosystem.config.js ]; then
+    PM2_APP_NAME=$(grep -oP "name:\s*['\"]([^'\"]+)['\"]" ecosystem.config.js | head -1 | grep -oP "['\"]([^'\"]+)['\"]" | tr -d "'\"")
+    echo "Using PM2 app name from ecosystem.config.js: $PM2_APP_NAME"
   fi
   
   # Restart or start the app

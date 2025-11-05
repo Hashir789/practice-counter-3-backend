@@ -10,9 +10,16 @@ echo "Starting deployment..."
 # Navigate to application directory
 APP_DIR="/home/ubuntu/kitaab-backend"
 
+echo "Current directory before change: $(pwd)"
+echo "Target directory: $APP_DIR"
+
 # Create directory if it doesn't exist
 mkdir -p $APP_DIR
 cd $APP_DIR
+
+echo "Current directory after change: $(pwd)"
+echo "Directory contents:"
+ls -la
 
 # Pull latest code
 echo "Pulling latest code from git..."

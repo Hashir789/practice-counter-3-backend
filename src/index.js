@@ -12,7 +12,7 @@ app.get('/health', (req, res) => {
 
 // Simple greeting endpoint
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Kitaab Backend API' });
+  res.json({ message: 'Welcome to Practice API' });
 });
 
 // Simple math endpoint for testing

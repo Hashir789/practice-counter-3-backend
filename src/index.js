@@ -1,6 +1,16 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
@@ -29,10 +39,40 @@ app.get('/api/add', (req, res) => {
   res.json({ result });
 });
 
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log(`Client connected: ${socket.id}`);
+
+  // Send welcome message to client
+  socket.emit('welcome', {
+    message: 'Welcome to the server!',
+    socketId: socket.id,
+  });
+
+  // Handle custom events
+  socket.on('message', (data) => {
+    console.log('Received message:', data);
+    // Echo the message back to the client
+    socket.emit('message', { ...data, received: true });
+  });
+
+  // Broadcast message to all connected clients
+  socket.on('broadcast', (data) => {
+    console.log('Broadcasting message:', data);
+    io.emit('broadcast', { ...data, from: socket.id });
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log(`Client disconnected: ${socket.id}`);
+  });
+});
+
 if (require.main === module) {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    console.log('Socket.io is ready for connections');
   });
 }
 
-module.exports = app;
+module.exports = { app, server, io };

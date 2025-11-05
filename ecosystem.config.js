@@ -2,7 +2,7 @@
 module.exports = {
   apps: [
     {
-      name: 'kitaab-backend',
+      name: 'practice-counter-3-backend',
       script: 'src/index.js',
       instances: 1,
       exec_mode: 'fork',

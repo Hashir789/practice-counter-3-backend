@@ -119,10 +119,45 @@ npm ci --production
 # Restart the application using PM2 (if installed) or systemd
 if command -v pm2 &> /dev/null; then
   echo "Restarting application with PM2..."
+  
+  # Try to find PM2 process running from this directory
+  PM2_APP_NAME=""
   if [ -f ecosystem.config.js ]; then
-    pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js --env production
+    # Extract app name from ecosystem.config.js
+    PM2_APP_NAME=$(grep -oP "name:\s*['\"]([^'\"]+)['\"]" ecosystem.config.js | head -1 | grep -oP "['\"]([^'\"]+)['\"]" | tr -d "'\"")
+    echo "Found PM2 app name in ecosystem.config.js: $PM2_APP_NAME"
+  fi
+  
+  # If no name from config, try to find PM2 process by working directory
+  if [ -z "$PM2_APP_NAME" ]; then
+    PM2_APP_NAME=$(pm2 list | grep -i "$(basename $APP_DIR)" | awk '{print $2}' | head -1)
+    if [ -n "$PM2_APP_NAME" ]; then
+      echo "Found PM2 app by directory name: $PM2_APP_NAME"
+    fi
+  fi
+  
+  # If still no name, try common names (check my-node-app first since it's likely the running one)
+  if [ -z "$PM2_APP_NAME" ]; then
+    for name in "my-node-app" "practice-counter-3-backend" "kitaab-backend"; do
+      if pm2 describe "$name" &>/dev/null; then
+        PM2_APP_NAME="$name"
+        echo "Found existing PM2 app: $PM2_APP_NAME"
+        break
+      fi
+    done
+  fi
+  
+  # Restart or start the app
+  if [ -n "$PM2_APP_NAME" ]; then
+    echo "Restarting PM2 app: $PM2_APP_NAME"
+    pm2 restart "$PM2_APP_NAME" || pm2 start ecosystem.config.js --env production || pm2 start src/index.js --name "$PM2_APP_NAME"
+  elif [ -f ecosystem.config.js ]; then
+    echo "Starting app using ecosystem.config.js..."
+    pm2 start ecosystem.config.js --env production
   else
-    pm2 restart kitaab-backend || pm2 start src/index.js --name kitaab-backend
+    APP_NAME=$(basename "$APP_DIR")
+    echo "Starting app with name: $APP_NAME"
+    pm2 start src/index.js --name "$APP_NAME"
   fi
   pm2 save
 elif systemctl is-active --quiet kitaab-backend.service; then

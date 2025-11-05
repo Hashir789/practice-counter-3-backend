@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # AWS EC2 Deployment Script
-# This script should be run on the EC2 instance
+# This script can be run on the EC2 instance or via SSH from CI/CD
 
 set -e
 
@@ -14,14 +14,9 @@ APP_DIR="/home/ubuntu/kitaab-backend"
 mkdir -p $APP_DIR
 cd $APP_DIR
 
-# Pull latest code (assuming git is set up)
-if [ -d .git ]; then
-  echo "Pulling latest code..."
-  git pull origin main || git pull origin master
-else
-  echo "Git repository not found. Please set up git manually."
-  exit 1
-fi
+# Pull latest code
+echo "Pulling latest code from git..."
+git pull origin main || git pull origin master || git pull
 
 # Install/update dependencies
 echo "Installing dependencies..."
@@ -40,8 +35,9 @@ elif systemctl is-active --quiet kitaab-backend.service; then
   echo "Restarting application with systemd..."
   sudo systemctl restart kitaab-backend
 else
-  echo "No process manager found. Please start the application manually:"
-  echo "  cd $APP_DIR && npm start"
+  echo "No process manager found. Starting application in background..."
+  pkill -f "node src/index.js" || true
+  nohup node src/index.js > app.log 2>&1 &
 fi
 
 echo "Deployment completed successfully!"

@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
+const BACKEND_URL = process.env.BACKEND_URL || 'http://d1tdizimiz2qsf.cloudfront.net';
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -15,18 +16,21 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+// API routes prefix
+const apiRouter = express.Router();
+
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+apiRouter.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running', backendUrl: BACKEND_URL });
 });
 
 // Simple greeting endpoint
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Practice API' });
+apiRouter.get('/', (req, res) => {
+  res.json({ message: 'Welcome to Practice API', backendUrl: BACKEND_URL });
 });
 
 // Simple math endpoint for testing
-app.get('/api/add', (req, res) => {
+apiRouter.get('/add', (req, res) => {
   const { a, b } = req.query;
   const numA = parseFloat(a);
   const numB = parseFloat(b);
@@ -37,6 +41,14 @@ app.get('/api/add', (req, res) => {
 
   const result = numA + numB;
   res.json({ result });
+});
+
+// Mount API router at /api
+app.use('/api', apiRouter);
+
+// Root endpoint (for backward compatibility)
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to Practice API', backendUrl: BACKEND_URL, apiBase: `${BACKEND_URL}/api` });
 });
 
 // Socket.io connection handling

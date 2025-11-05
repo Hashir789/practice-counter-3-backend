@@ -2,20 +2,29 @@ const request = require('supertest');
 const { app } = require('./index');
 
 describe('API Endpoints', () => {
-  describe('GET /health', () => {
+  describe('GET /api/health', () => {
     it('should return health status', async () => {
-      const response = await request(app).get('/health');
+      const response = await request(app).get('/api/health');
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('ok');
       expect(response.body.message).toBe('Server is running');
     });
   });
 
-  describe('GET /', () => {
+  describe('GET /api/', () => {
     it('should return welcome message', async () => {
+      const response = await request(app).get('/api/');
+      expect(response.status).toBe(200);
+      expect(response.body.message).toContain('Practice API');
+    });
+  });
+
+  describe('GET /', () => {
+    it('should return welcome message with backend URL', async () => {
       const response = await request(app).get('/');
       expect(response.status).toBe(200);
       expect(response.body.message).toContain('Practice API');
+      expect(response.body.apiBase).toBeDefined();
     });
   });
 

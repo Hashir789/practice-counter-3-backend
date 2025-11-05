@@ -6,16 +6,41 @@ const app = express();
 const server = http.createServer(app);
 const BACKEND_URL =
   process.env.BACKEND_URL || 'http://d1tdizimiz2qsf.cloudfront.net';
+
+// Configure Socket.io for CloudFront WebSocket support
+// CloudFront requires the path to be accessible (e.g., /api/socket.io)
 const io = new Server(server, {
+  path: '/api/socket.io',
   cors: {
     origin: '*',
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    credentials: true,
   },
+  transports: ['websocket', 'polling'], // Support both WebSocket and polling fallback
+  allowEIO3: true, // Allow Engine.IO v3 clients for compatibility
 });
 
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// CORS middleware for CloudFront compatibility
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, DELETE, OPTIONS',
+  );
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+  );
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // API routes prefix
 const apiRouter = express.Router();
@@ -51,12 +76,23 @@ apiRouter.get('/add', (req, res) => {
 // Mount API router at /api
 app.use('/api', apiRouter);
 
+// Socket.io endpoint info
+apiRouter.get('/socket-info', (req, res) => {
+  res.json({
+    socketPath: '/api/socket.io',
+    socketUrl: `${BACKEND_URL}/api/socket.io`,
+    transports: ['websocket', 'polling'],
+    message: 'WebSocket endpoint available at /api/socket.io',
+  });
+});
+
 // Root endpoint (for backward compatibility)
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to Practice API',
     backendUrl: BACKEND_URL,
     apiBase: `${BACKEND_URL}/api`,
+    socketUrl: `${BACKEND_URL}/api/socket.io`,
   });
 });
 
@@ -92,6 +128,8 @@ io.on('connection', (socket) => {
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    console.log(`API endpoints available at: ${BACKEND_URL}/api`);
+    console.log(`WebSocket endpoint available at: ${BACKEND_URL}/api/socket.io`);
     console.log('Socket.io is ready for connections');
   });
 }

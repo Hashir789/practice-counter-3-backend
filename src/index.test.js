@@ -41,4 +41,22 @@ describe('API Endpoints', () => {
       expect(response.body.error).toBe('Invalid parameters');
     });
   });
+
+  describe('GET /api/socket-info', () => {
+    it('should return socket endpoint information', async () => {
+      const response = await request(app).get('/api/socket-info');
+      expect(response.status).toBe(200);
+      expect(response.body.socketPath).toBe('/api/socket.io');
+      expect(response.body.socketUrl).toContain('/api/socket.io');
+      expect(response.body.transports).toContain('websocket');
+      expect(response.body.transports).toContain('polling');
+    });
+  });
+
+  describe('OPTIONS /api/*', () => {
+    it('should handle CORS preflight requests', async () => {
+      const response = await request(app).options('/api/health');
+      expect(response.status).toBe(200);
+    });
+  });
 });
